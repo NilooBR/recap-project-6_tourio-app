@@ -27,10 +27,4 @@ export default async function handler(request, response) {
         .json({ status: "error creating place", error: error.message });
     }
   }
-
-  // If method is not GET or POST, respond with 405
-  response.setHeader("Allow", ["GET", "POST"]);
-  return response
-    .status(405)
-    .json({ status: `Method ${request.method} Not Allowed` });
 }

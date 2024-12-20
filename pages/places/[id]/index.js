@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import useSWR from "swr";
 import styled from "styled-components";
-import Comments from "../../../components/Comments";
+import { useState } from "react";
 import { StyledLink } from "../../../components/StyledLink";
 import { StyledButton } from "../../../components/StyledButton";
 import { StyledImage } from "../../../components/StyledImage";
@@ -30,17 +30,34 @@ const StyledLocationLink = styled(StyledLink)`
   border: none;
 `;
 
+const ConfirmMessage = styled.div`
+  text-align: center;
+  color: red;
+  padding: 1rem;
+  border: 1px solid red;
+  border-radius: 5px;
+  margin-top: 1rem;
+`;
+
 export default function DetailsPage() {
   const router = useRouter();
   const { isReady } = router;
   const { id } = router.query;
 
   const { data: place, isLoading, error } = useSWR(`/api/places/${id}`);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   if (!isReady || isLoading || error) return <h2>Loading...</h2>;
 
   async function deletePlace() {
-    console.log("Deleting place ...");
+    try {
+      await fetch(`/api/places/${id}`, {
+        method: "DELETE",
+      });
+      router.push("/");
+    } catch (error) {
+      console.error("Error deleting place:", error.message);
+    }
   }
 
   return (
@@ -68,10 +85,34 @@ export default function DetailsPage() {
       <p>{place.description}</p>
       <ButtonContainer>
         <StyledLink href={`/places/${id}/edit`}>Edit</StyledLink>
-        <StyledButton onClick={deletePlace} type="button" $variant="delete">
+        <StyledButton
+          onClick={() => setShowConfirm(true)}
+          type="button"
+          $variant="delete"
+        >
           Delete
         </StyledButton>
       </ButtonContainer>
+      {showConfirm && (
+        <ConfirmMessage>
+          <p>Are you sure?</p>
+          <ButtonContainer>
+            <StyledButton
+              onClick={deletePlace}
+              type="button"
+              $variant="delete"
+            >
+              Yes, Delete
+            </StyledButton>
+            <StyledButton
+              onClick={() => setShowConfirm(false)}
+              type="button"
+            >
+              Cancel
+            </StyledButton>
+          </ButtonContainer>
+        </ConfirmMessage>
+      )}
     </>
   );
 }
